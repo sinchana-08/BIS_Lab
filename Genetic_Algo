@@ -1,0 +1,40 @@
+import numpy as np
+
+# Objective function: f(x) = x^2
+def objective_function(x):
+    return x**2
+
+# Genetic Algorithm
+def genetic_algorithm(pop_size=20, n_generations=6, mutation_rate=0.1, crossover_rate=0.7):
+    population = np.random.uniform(-10, 10, pop_size)  # Random initial population
+    
+    for _ in range(n_generations):
+        fitness = objective_function(population)
+        selected = population[np.random.choice(range(pop_size), size=pop_size, p=fitness/fitness.sum())]  # Selection
+        
+        # Crossover: Create offspring by averaging pairs of selected individuals
+        offspring = []
+        for i in range(0, pop_size, 2):
+            if i + 1 < pop_size and np.random.rand() < crossover_rate:
+                offspring.append((selected[i] + selected[i+1]) / 2)
+                offspring.append((selected[i+1] + selected[i]) / 2)
+            else:
+                offspring.append(selected[i])
+                if i + 1 < pop_size:
+                    offspring.append(selected[i+1])
+        
+        offspring = np.array(offspring)  # Convert offspring list to array
+        
+        # Mutation: Apply mutation to offspring
+        mutation_mask = np.random.rand(pop_size) < mutation_rate
+        offspring += np.random.uniform(-1, 1, pop_size) * mutation_mask  # Mutation
+        
+        population = offspring  # Update population
+        best_solution = population[np.argmax(fitness)]
+        print(f"Best Solution: {best_solution}, Fitness: {objective_function(best_solution)}")
+
+    return best_solution, objective_function(best_solution)
+
+# Run Genetic Algorithm
+best_solution, best_fitness = genetic_algorithm(pop_size=20, n_generations=6)
+print(f"Final Best Solution: {best_solution}, Final Fitness: {best_fitness}")
