@@ -1,0 +1,53 @@
+import numpy as np
+
+# Calculate Euclidean distance
+def distance(city1, city2):
+    return np.linalg.norm(city1 - city2)
+
+# Ant Colony Optimization for TSP
+def ant_colony_optimization(cities, n_ants=10, n_iterations=100, alpha=1, beta=2, rho=0.5, q=1):
+    n_cities = len(cities)
+    pheromone = np.ones((n_cities, n_cities)) / n_cities  # Initial pheromone
+    heuristic = np.array([[1 / (distance(cities[i], cities[j]) + 1e-10) for j in range(n_cities)] for i in range(n_cities)])
+
+    best_route, best_distance = None, float('inf')
+
+    for _ in range(n_iterations):
+        routes, distances = [], []
+
+        for _ in range(n_ants):
+            route, visited = [np.random.randint(n_cities)], [False] * n_cities
+            visited[route[0]] = True
+            for _ in range(n_cities - 1):
+                current_city = route[-1]
+                probs = [pheromone[current_city][j]**alpha * heuristic[current_city][j]**beta if not visited[j] else 0 for j in range(n_cities)]
+                next_city = np.random.choice(range(n_cities), p=np.array(probs) / sum(probs))
+                route.append(next_city)
+                visited[next_city] = True
+
+            route_distance = sum(distance(cities[route[i]], cities[route[i + 1]]) for i in range(n_cities - 1)) + distance(cities[route[-1]], cities[route[0]])
+            routes.append(route)
+            distances.append(route_distance)
+            
+            if route_distance < best_distance:
+                best_distance, best_route = route_distance, route
+
+        # Pheromone update: Evaporation + new pheromone deposit
+        pheromone *= (1 - rho)
+        for route, dist in zip(routes, distances):
+            for i in range(n_cities - 1):
+                pheromone[route[i], route[i + 1]] += q / dist
+            pheromone[route[-1], route[0]] += q / dist  # Close the loop
+
+        print(f"Best Distance: {best_distance}")
+
+    return best_route, best_distance
+
+# Example usage
+cities = np.array([[0, 0], [1, 3], [4, 3], [6, 1], [3, 0]])  # 5 cities with coordinates
+best_route, best_distance = ant_colony_optimization(cities, n_ants=10, n_iterations=6)
+
+print(f"Best Route: {best_route}")
+print(f"Best Distance: {best_distance}")
+
+print(f"Best Distance: {best_distance}")
