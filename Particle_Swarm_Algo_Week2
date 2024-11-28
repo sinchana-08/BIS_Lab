@@ -1,0 +1,47 @@
+import numpy as np
+
+# Objective function: f(x) = x^2
+def objective_function(x):
+    return x**2
+
+# Particle Swarm Optimization (PSO)
+def pso(n_particles=30, n_iterations=100, w=0.5, c1=1.5, c2=1.5):
+    # Initialize particles
+    positions = np.random.uniform(-10, 10, n_particles)  # Random positions between -10 and 10
+    velocities = np.random.uniform(-1, 1, n_particles)  # Random velocities
+    personal_best_positions = positions.copy()  # Personal best positions
+    personal_best_fitness = np.array([objective_function(x) for x in positions])  # Evaluate fitness of each particle
+
+    global_best_position = personal_best_positions[np.argmin(personal_best_fitness)]  # Global best position
+    global_best_fitness = np.min(personal_best_fitness)  # Global best fitness
+
+    # Iterate over generations
+    for _ in range(n_iterations):
+        # Update velocities and positions
+        for i in range(n_particles):
+            r1, r2 = np.random.rand(2)  # Random numbers for the cognitive and social components
+            velocities[i] = (w * velocities[i] +
+                             c1 * r1 * (personal_best_positions[i] - positions[i]) +
+                             c2 * r2 * (global_best_position - positions[i]))
+            positions[i] += velocities[i]
+
+            # Update personal best
+            fitness = objective_function(positions[i])
+            if fitness < personal_best_fitness[i]:
+                personal_best_fitness[i] = fitness
+                personal_best_positions[i] = positions[i]
+
+        # Update global best
+        min_fitness_idx = np.argmin(personal_best_fitness)
+        if personal_best_fitness[min_fitness_idx] < global_best_fitness:
+            global_best_fitness = personal_best_fitness[min_fitness_idx]
+            global_best_position = personal_best_positions[min_fitness_idx]
+
+        print(f"Best Position: {global_best_position}, Best Fitness: {global_best_fitness}")
+
+    return global_best_position, global_best_fitness
+
+# Run PSO to optimize f(x) = x^2
+best_position, best_fitness = pso(n_particles=30, n_iterations=6)
+
+print(f"Final Best Position: {best_position}, Final Best Fitness: {best_fitness}")
