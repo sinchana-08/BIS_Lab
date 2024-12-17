@@ -1,0 +1,86 @@
+import random
+
+# Objective function: Minimize f(x) = x^2
+def objective_function(position):
+    return position ** 2
+
+# Initialize the grid with cells having random positions
+def initialize_grid(rows, cols, lower_bound, upper_bound):
+    grid = []
+    for i in range(rows):
+        row = []
+        for j in range(cols):
+            position = random.uniform(lower_bound, upper_bound)  # Random position in the solution space
+            state = random.uniform(lower_bound, upper_bound)     # Random state
+            fitness = objective_function(position)              # Evaluate initial fitness
+            row.append({'position': position, 'state': state, 'fitness': fitness})
+        grid.append(row)
+    return grid
+
+# Get neighbors of a cell in the grid
+def get_neighbors(grid, i, j):
+    rows, cols = len(grid), len(grid[0])
+    neighbors = []
+    for di in [-1, 0, 1]:
+        for dj in [-1, 0, 1]:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < rows and 0 <= nj < cols and (di != 0 or dj != 0):
+                neighbors.append(grid[ni][nj])
+    return neighbors
+
+# Update the state of a cell based on its neighbors
+def update_state(cell, neighbors):
+    neighbor_states = [neighbor['state'] for neighbor in neighbors]
+    new_state = sum(neighbor_states) / len(neighbor_states) + random.uniform(-0.1, 0.1)  # Add small random noise
+    return new_state
+
+# Map the state to a new position in the solution space
+def update_position(state):
+    return state
+
+# Main function implementing the Parallel Cellular Algorithm
+def parallel_cellular_algorithm(rows, cols, lower_bound, upper_bound, max_iterations):
+    # Step 1: Initialize the grid
+    grid = initialize_grid(rows, cols, lower_bound, upper_bound)
+
+    # Track the global best solution
+    best_solution = None
+    best_fitness = float('inf')
+
+    # Step 2: Iterate for a fixed number of iterations
+    for iteration in range(max_iterations):
+        for i in range(rows):
+            for j in range(cols):
+                # Evaluate the fitness of the current cell
+                grid[i][j]['fitness'] = objective_function(grid[i][j]['position'])
+
+                # Update the global best solution
+                if grid[i][j]['fitness'] < best_fitness:
+                    best_fitness = grid[i][j]['fitness']
+                    best_solution = grid[i][j]['position']
+
+        # Update the states and positions of all cells
+        for i in range(rows):
+            for j in range(cols):
+                neighbors = get_neighbors(grid, i, j)
+                new_state = update_state(grid[i][j], neighbors)A
+                grid[i][j]['state'] = new_state
+                grid[i][j]['position'] = update_position(new_state)
+
+        # Print progress
+        print(f"Iteration {iteration+1}/{max_iterations}: Best Fitness = {best_fitness:.6f}")
+
+    # Return the best solution found
+    return best_solution, best_fitness
+
+# Run the Parallel Cellular Algorithm
+if __name__ == "__main__":
+    rows = 5               # Number of rows in the grid
+    cols = 5               # Number of columns in the grid
+    lower_bound = -10.0    # Lower bound of the search space
+    upper_bound = 10.0     # Upper bound of the search space
+    max_iterations = 15    # Number of iterations
+
+    best_solution, best_fitness = parallel_cellular_algorithm(rows, cols, lower_bound, upper_bound, max_iterations)
+    print("\nBest Solution Found:")
+    print(f"Position: {best_solution:.6f}, Fitness: {best_fitness:.6f}")
