@@ -1,0 +1,92 @@
+import random
+
+# Objective function: Minimize f(x) = x^2
+def objective_function(x):
+    return x ** 2
+
+# Generate a random genetic sequence (one value in this case)
+def generate_random_sequence():
+    return random.uniform(-10, 10)  # Random value between -10 and 10
+
+# Translate genetic sequence into functional solution
+def gene_expression(sequence):
+    return sequence  # For this example, the sequence directly represents the solution
+
+# Evaluate fitness of a sequence
+def evaluate_fitness(sequence):
+    solution = gene_expression(sequence)
+    return objective_function(solution)
+
+# Roulette Wheel Selection
+def roulette_wheel_selection(population, fitnesses):
+    total_fitness = sum(1 / (fitness + 1e-6) for fitness in fitnesses)  # Avoid division by zero
+    pick = random.uniform(0, total_fitness)
+    current = 0
+    for i, fitness in enumerate(fitnesses):
+        current += 1 / (fitness + 1e-6)
+        if current > pick:
+            return population[i]
+
+# Perform single-point crossover
+def crossover(parent1, parent2):
+    alpha = random.uniform(0, 1)  # Linear interpolation between parents
+    child1 = alpha * parent1 + (1 - alpha) * parent2
+    child2 = (1 - alpha) * parent1 + alpha * parent2
+    return child1, child2
+
+# Mutate a genetic sequence
+def mutate(sequence, mutation_rate=0.1):
+    if random.random() < mutation_rate:
+        sequence += random.uniform(-1, 1)  # Add small random noise
+    return sequence
+
+# Gene Expression Algorithm
+def gene_expression_algorithm(population_size, generations, mutation_rate):
+    # Step 1: Initialize population
+    population = [generate_random_sequence() for _ in range(population_size)]
+    best_solution = None
+    best_fitness = float('inf')
+
+    # Step 2: Evolution Loop
+    for generation in range(generations):
+        # Evaluate fitness
+        fitnesses = [evaluate_fitness(seq) for seq in population]
+
+        # Update the best solution
+        for i, fitness in enumerate(fitnesses):
+            if fitness < best_fitness:
+                best_fitness = fitness
+                best_solution = population[i]
+
+        # Print progress
+        print(f"Generation {generation+1}: Best Fitness = {best_fitness:.6f}, Best Solution = {best_solution:.6f}")
+
+        # Selection
+        new_population = []
+        for _ in range(population_size // 2):
+            parent1 = roulette_wheel_selection(population, fitnesses)
+            parent2 = roulette_wheel_selection(population, fitnesses)
+
+            # Crossover
+            child1, child2 = crossover(parent1, parent2)
+
+            # Mutation
+            child1 = mutate(child1, mutation_rate)
+            child2 = mutate(child2, mutation_rate)
+
+            new_population.extend([child1, child2])
+
+        population = new_population  # Replace old population with new population
+
+    # Return the best solution found
+    return best_solution, best_fitness
+
+# Run the Gene Expression Algorithm
+if __name__ == "__main__":
+    population_size = 20  # Number of genetic sequences
+    generations = 10      # Number of generations
+    mutation_rate = 0.1   # Probability of mutation
+
+    best_solution, best_fitness = gene_expression_algorithm(population_size, generations, mutation_rate)
+    print("\nBest Solution Found:")
+    print(f"Solution: {best_solution:.6f}, Fitness: {best_fitness:.6f}")
