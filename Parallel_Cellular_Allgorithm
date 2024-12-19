@@ -63,7 +63,7 @@ def parallel_cellular_algorithm(rows, cols, lower_bound, upper_bound, max_iterat
         for i in range(rows):
             for j in range(cols):
                 neighbors = get_neighbors(grid, i, j)
-                new_state = update_state(grid[i][j], neighbors)A
+                new_state = update_state(grid[i][j], neighbors)
                 grid[i][j]['state'] = new_state
                 grid[i][j]['position'] = update_position(new_state)
 
