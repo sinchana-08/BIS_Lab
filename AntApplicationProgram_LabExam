@@ -1,0 +1,87 @@
+import numpy as np
+
+# Calculate Euclidean distance with a small epsilon to avoid division by zero
+def distance(city1, city2):
+    return np.linalg.norm(city1 - city2) + 1e-10
+
+# Ant colony optimization function
+def ant_colony_optimization(flights, airports, aircrafts, n_ants=10, n_iterations=20, alpha=1, beta=2, rho=0.5, q=1):
+    n_airports = len(airports)
+    pheromone = np.ones((n_airports, n_airports)) / n_airports  # Initial pheromone
+    heuristic = np.array([[1 / distance(airports[i], airports[j]) for j in range(n_airports)] for i in range(n_airports)])
+
+    best_schedule, best_cost = None, float('inf')
+
+    for iteration in range(n_iterations):
+        schedules, costs = [], []
+
+        for ant in range(n_ants):
+            schedule, visited = [np.random.randint(n_airports)], [False] * n_airports
+            visited[schedule[0]] = True
+
+            # Construct the route for each ant
+            for step in range(n_airports - 1):
+                current_airport = schedule[-1]
+                probabilities = []
+
+                # Calculate probabilities for the next airport
+                for next_airport in range(n_airports):
+                    if not visited[next_airport]:
+                        prob = pheromone[current_airport][next_airport] ** alpha * heuristic[current_airport][next_airport] ** beta
+                        probabilities.append(prob)
+                    else:
+                        probabilities.append(0)
+
+                total_prob = sum(probabilities)
+                if total_prob == 0:
+                    break  # Skip to the next ant if no valid step is possible
+
+                # Normalize probabilities and choose the next airport
+                probabilities = np.array(probabilities)
+                probabilities /= total_prob
+
+                next_airport = np.random.choice(np.arange(n_airports), p=probabilities)
+                schedule.append(next_airport)
+                visited[next_airport] = True
+
+            # Ensure we visited all airports, otherwise discard this route
+            if len(schedule) < n_airports:
+                continue
+
+            # Calculate the total cost (sum of flight times or any other cost function)
+            route_cost = sum(distance(airports[schedule[i]], airports[schedule[i + 1]]) for i in range(len(schedule) - 1)) + distance(airports[schedule[-1]], airports[schedule[0]])
+
+            schedules.append(schedule)
+            costs.append(route_cost)
+
+            # Update best schedule if the current one has a lower cost
+            if route_cost < best_cost:
+                best_cost, best_schedule = route_cost, schedule
+
+        # Pheromone update: Evaporation + new pheromone deposit
+        if schedules:  # Only update pheromones if there are valid schedules
+            pheromone *= (1 - rho)
+            for schedule, cost in zip(schedules, costs):
+                for i in range(len(schedule) - 1):
+                    pheromone[schedule[i], schedule[i + 1]] += q / cost
+                pheromone[schedule[-1], schedule[0]] += q / cost  # Close the loop
+
+        # Debugging output to check progress of the algorithm
+        print(f"Iteration {iteration + 1} complete. Best cost so far: {best_cost}")
+
+    # Return best schedule and cost
+    if best_schedule is None:
+        print("No valid solution found.")
+        return [], float('inf')  # Return empty if no valid solution is found
+    return best_schedule, best_cost
+
+# Example usage
+airports = np.array([[0, 0], [2, 3], [4, 4], [6, 1], [3, 0]])  # Example airports with coordinates
+aircrafts = [1, 2, 3]  # Example aircrafts (not used in current logic)
+
+# Run the Ant Colony Optimization for flight scheduling
+best_schedule, best_cost = ant_colony_optimization(flights=None, airports=airports, aircrafts=aircrafts, n_ants=10, n_iterations=20)
+
+# Output the best schedule and cost
+print(f"Best Schedule: {best_schedule}")
+print(f"Best Cost: {best_cost}")
